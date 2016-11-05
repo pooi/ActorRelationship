@@ -44,7 +44,7 @@ public class ActorRelationship {
 	public static void main(String[] args) {
 		
 		MainFrame frame = new MainFrame();
-
+		
 	}
 
 }
