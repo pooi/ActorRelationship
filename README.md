@@ -6,7 +6,7 @@
 Actor Relationship은 어느 한 영화인이 다른 영화인한테 같이 출연하자고 제의하는 것이 얼마나 어려울 지를 구하는 프로그램입니다.
 <br>
 <br>
-## precondition
+## Precondition
 <OL>
   <li>영화인의 인맥형성은 같은 작품 출연 여부이다.
   <li>최근에 함께 출연했을 경우 친밀도가 높다.
