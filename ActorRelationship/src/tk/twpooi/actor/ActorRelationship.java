@@ -64,7 +64,12 @@ class SubFrame extends JFrame{
 		this.totalYear = total;
 		this.list = list;
 		
-		this.setBounds((int)r.getX()+10, (int)r.getY()+10, (int)r.getWidth(), (int)r.getHeight());
+		double height = r.getHeight();
+		if(height < height/4*list.size()){
+			height = height/4*list.size();
+		}
+		
+		this.setBounds((int)r.getX()+10, (int)r.getY()+10, (int)r.getWidth(), (int)height);
 		
 		GridLayout gl = new GridLayout( list.size(), 1);
 		this.setLayout(gl);
@@ -134,14 +139,15 @@ class SubFrame extends JFrame{
 					String path = actorImgList.get(actorList.indexOf(actor));
 					URL url = new URL(path);
 					image = ImageIO.read(url);
+
+					JLabel actorImgLabel = new JLabel(new ImageIcon(image));
+					actorImgLabel.setOpaque(true);
+					actorImgLabel.setBackground(bgColor);
+					addGrid(gbl, gbc, actorImgLabel, 0, 1, 1, 2, 1, 2);
+
 				}catch(Exception e){
 					e.printStackTrace();
 				}
-
-				JLabel actorImgLabel = new JLabel(new ImageIcon(image));
-				actorImgLabel.setOpaque(true);
-				actorImgLabel.setBackground(bgColor);
-				addGrid(gbl, gbc, actorImgLabel, 0, 1, 1, 2, 1, 2);
 			}
 
 			JLabel actorLabel = new JLabel(actor);
