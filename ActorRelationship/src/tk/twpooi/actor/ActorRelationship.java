@@ -33,6 +33,11 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
+import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
 
 public class ActorRelationship {
 	
@@ -64,10 +69,21 @@ class SubFrame extends JFrame{
 		GridLayout gl = new GridLayout( list.size(), 1);
 		this.setLayout(gl);
 		
-		
-		for(HashMap<String, String> h : list){
-			ActorItem item = new ActorItem(h);
-			this.add(item);
+		if(total == 5000){
+			
+			JLabel label = new JLabel("There are no relationship.");
+			label.setOpaque(true);
+			label.setBackground(ActorRelationship.bgColor);
+			label.setForeground(Color.white);
+			label.setHorizontalAlignment(SwingConstants.CENTER);
+			
+			this.add(label);
+			
+		}else{
+			for(HashMap<String, String> h : list){
+				ActorItem item = new ActorItem(h);
+				this.add(item);
+			}
 		}
 		
 		this.setVisible(true);
@@ -112,20 +128,22 @@ class SubFrame extends JFrame{
 				movieLabel.setBackground(headerColor);
 			}
 
-			BufferedImage image = null;
-			try{
-				String path = actorImgList.get(actorList.indexOf(actor));
-				URL url = new URL(path);
-				image = ImageIO.read(url);
-			}catch(Exception e){
-				e.printStackTrace();
+			if(actorImgList != null){
+				BufferedImage image = null;
+				try{
+					String path = actorImgList.get(actorList.indexOf(actor));
+					URL url = new URL(path);
+					image = ImageIO.read(url);
+				}catch(Exception e){
+					e.printStackTrace();
+				}
+
+				JLabel actorImgLabel = new JLabel(new ImageIcon(image));
+				actorImgLabel.setOpaque(true);
+				actorImgLabel.setBackground(bgColor);
+				addGrid(gbl, gbc, actorImgLabel, 0, 1, 1, 2, 1, 2);
 			}
 
-			JLabel actorImgLabel = new JLabel(new ImageIcon(image));
-			actorImgLabel.setOpaque(true);
-			actorImgLabel.setBackground(bgColor);
-			addGrid(gbl, gbc, actorImgLabel, 0, 1, 1, 2, 1, 2);
-			
 			JLabel actorLabel = new JLabel(actor);
 			actorLabel.setOpaque(true);
 			actorLabel.setBackground(bgColor);
@@ -205,6 +223,21 @@ class MainFrame extends JFrame{
 				
 			}
 		});
+		
+		JButton xlsxBtn = new JButton("Xlsx에서 가져오기");
+		xlsxBtn.setOpaque(true);
+		xlsxBtn.setBackground(ActorRelationship.bgDarkColor);
+		xlsxBtn.setForeground(Color.white);
+		xlsxBtn.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 0, 0, 0, Color.darkGray),
+				BorderFactory.createEmptyBorder(5,  5,  5,  5)));
+		xlsxBtn.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+				clicked();
+			}
+		});
+		yearPanel.addAdditionComponents(xlsxBtn);
+		
+		
 		this.add(yearPanel, BorderLayout.NORTH);
 		
 		
@@ -214,7 +247,7 @@ class MainFrame extends JFrame{
 		
 		actorPanel = new SearchPanel(this);
 		actorPanel.setSearchBtnEnabled(false);
-		actorPanel.showAdditionButtonPanel();
+		//actorPanel.showAdditionButtonPanel();
 		actorPanel.setEnabled(false);
 		actorPanel.setSearchBtnAction(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
@@ -238,38 +271,55 @@ class MainFrame extends JFrame{
 				}
 			}
 		});
-		actorPanel.setAdditionBtn1Text("basicGraph 출력");
-		actorPanel.setAdditionBtn1Action(new ActionListener(){
+		
+		JButton addActorBtn1 = new JButton("basicGraph 출력");
+		JButton addActorBtn2 = new JButton("dGraph 출력");
+		
+		addActorBtn1.setOpaque(true);
+		addActorBtn1.setBackground(ActorRelationship.bgDarkColor);
+		addActorBtn1.setForeground(Color.white);
+		addActorBtn1.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, Color.darkGray),
+				BorderFactory.createEmptyBorder(5,  5,  5,  0)));
+		
+		addActorBtn2.setOpaque(true);
+		addActorBtn2.setBackground(ActorRelationship.bgDarkColor);
+		addActorBtn2.setForeground(Color.white);
+		addActorBtn2.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 0, 0, 0, Color.darkGray),
+				BorderFactory.createEmptyBorder(5,  5,  5,  0)));
+		
+		addActorBtn1.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
 				new Thread(){
 					public void run(){
 						yearPanel.setEnabled(false);
-						actorPanel.setAdditionBtnEnabled(false);
+						actorPanel.setAdditionPanelEnabled(false);
 						
 						ActorRelationship.floyd.printBasicGraph();
 						
-						actorPanel.setAdditionBtnEnabled(true);
+						actorPanel.setAdditionPanelEnabled(true);
 						yearPanel.setEnabled(true);
 					}
 				}.start();
 			}
 		});
-		actorPanel.setAdditionBtn2Text("dGraph 출력");
-		actorPanel.setAdditionBtn2Action(new ActionListener(){
+		addActorBtn2.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
 				new Thread(){
 					public void run(){
 						yearPanel.setEnabled(false);
-						actorPanel.setAdditionBtnEnabled(false);
+						actorPanel.setAdditionPanelEnabled(false);
 						
 						ActorRelationship.floyd.printdGraph();
 						
-						actorPanel.setAdditionBtnEnabled(true);
+						actorPanel.setAdditionPanelEnabled(true);
 						yearPanel.setEnabled(true);
 					}
 				}.start();
 			}
 		});
+		actorPanel.addAdditionComponents(addActorBtn1, addActorBtn2);
+		actorPanel.setAdditionPanelEnabled(false);
+		
 		this.add(actorPanel, BorderLayout.SOUTH);
 		
 		
@@ -279,6 +329,13 @@ class MainFrame extends JFrame{
 	
 	public Rectangle getBound(){
 		return this.getBounds();
+	}
+	
+	public void clicked(){
+		
+		ActorRelationship.floyd = new FloydAlgorithm(this);
+		ActorRelationship.floyd.start();
+		
 	}
 	
 	public void clicked(String a, String b){
@@ -312,8 +369,8 @@ class SearchPanel extends JPanel implements ComponentListener{
 	private JButton searchBtn;
 	
 	private JPanel additionPanel;
-	private JButton additionBtn1;
-	private JButton additionBtn2;
+//	private JButton additionBtn1;
+//	private JButton additionBtn2;
 	
 	SearchPanel(MainFrame parent){
 		
@@ -379,41 +436,71 @@ class SearchPanel extends JPanel implements ComponentListener{
 		field2.setEnabled(b);
 		searchBtn.setEnabled(b);
 		if(additionPanel != null){
-			additionBtn1.setEnabled(b);
-			additionBtn2.setEnabled(b);
+			setAdditionPanelEnabled(b);
 		}
 	}
 	
-	public void showAdditionButtonPanel(){
-
+	public void addAdditionComponents(Component c){
+		
 		additionPanel = new JPanel();
-		additionBtn1 = new JButton("btn1");
-		additionBtn2 = new JButton("btn2");
 		
 		additionPanel.setOpaque(true);
 		additionPanel.setBackground(ActorRelationship.bgDarkColor);
 		
-		additionBtn1.setOpaque(true);
-		additionBtn1.setBackground(ActorRelationship.bgDarkColor);
-		additionBtn1.setForeground(Color.white);
-		additionBtn1.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, Color.darkGray),
-				BorderFactory.createEmptyBorder(5,  5,  5,  0)));
-		
-		additionBtn2.setOpaque(true);
-		additionBtn2.setBackground(ActorRelationship.bgDarkColor);
-		additionBtn2.setForeground(Color.white);
-		additionBtn2.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 0, 0, 0, Color.darkGray),
-				BorderFactory.createEmptyBorder(5,  5,  5,  0)));
-		
-		
-		additionPanel.setLayout(new GridLayout(1, 2));
-		additionPanel.add(additionBtn1);
-		additionPanel.add(additionBtn2);
+		additionPanel.setLayout(new GridLayout(1, 1));
+		additionPanel.add(c);
 		additionPanel.setVisible(true);
 		
 		addGrid(gbl,gbc, additionPanel, 0, 2, 4, 1, 1, 1);
 		
 	}
+	
+	public void addAdditionComponents(Component c1, Component c2){
+		
+		additionPanel = new JPanel();
+		
+		additionPanel.setOpaque(true);
+		additionPanel.setBackground(ActorRelationship.bgDarkColor);
+		
+		additionPanel.setLayout(new GridLayout(1, 2));
+		additionPanel.add(c1);
+		additionPanel.add(c2);
+		additionPanel.setVisible(true);
+		
+		addGrid(gbl,gbc, additionPanel, 0, 2, 4, 1, 1, 1);
+		
+	}
+	
+//	public void showAdditionButtonPanel(){
+//
+//		additionPanel = new JPanel();
+//		additionBtn1 = new JButton("btn1");
+//		additionBtn2 = new JButton("btn2");
+//		
+//		additionPanel.setOpaque(true);
+//		additionPanel.setBackground(ActorRelationship.bgDarkColor);
+//		
+//		additionBtn1.setOpaque(true);
+//		additionBtn1.setBackground(ActorRelationship.bgDarkColor);
+//		additionBtn1.setForeground(Color.white);
+//		additionBtn1.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, Color.darkGray),
+//				BorderFactory.createEmptyBorder(5,  5,  5,  0)));
+//		
+//		additionBtn2.setOpaque(true);
+//		additionBtn2.setBackground(ActorRelationship.bgDarkColor);
+//		additionBtn2.setForeground(Color.white);
+//		additionBtn2.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 0, 0, 0, Color.darkGray),
+//				BorderFactory.createEmptyBorder(5,  5,  5,  0)));
+//		
+//		
+//		additionPanel.setLayout(new GridLayout(1, 2));
+//		additionPanel.add(additionBtn1);
+//		additionPanel.add(additionBtn2);
+//		additionPanel.setVisible(true);
+//		
+//		addGrid(gbl,gbc, additionPanel, 0, 2, 4, 1, 1, 1);
+//		
+//	}
 
 	public void setSearchBtnText(String t){
 		searchBtn.setText(t);
@@ -433,28 +520,34 @@ class SearchPanel extends JPanel implements ComponentListener{
 	private void setLabelSize(){
 		this.setPreferredSize(new Dimension(parent.getWidth(), (int)(parent.getHeight()*0.2)));
 	}
-	public void setAdditionBtn1Text(String t){
-		additionBtn1.setText(t);
+	public void setAdditionPanelEnabled(boolean b){
+		additionPanel.setEnabled(b);
+		for(Component c : additionPanel.getComponents()){
+			c.setEnabled(b);
+		}
 	}
-	public void setAdditionBtn2Text(String t){
-		additionBtn2.setText(t);
-	}
-	public void setAdditionBtn1Action(ActionListener a){
-		additionBtn1.addActionListener(a);
-	}
-	public void setAdditionBtn2Action(ActionListener a){
-		additionBtn2.addActionListener(a);
-	}
-	public void setAdditionBtnEnabled(boolean b){
-		setAdditionBtn1Enabled(b);
-		setAdditionBtn2Enabled(b);
-	}
-	public void setAdditionBtn1Enabled(boolean b){
-		additionBtn1.setEnabled(b);
-	}
-	public void setAdditionBtn2Enabled(boolean b){
-		additionBtn2.setEnabled(b);
-	}
+//	public void setAdditionBtn1Text(String t){
+//		additionBtn1.setText(t);
+//	}
+//	public void setAdditionBtn2Text(String t){
+//		additionBtn2.setText(t);
+//	}
+//	public void setAdditionBtn1Action(ActionListener a){
+//		additionBtn1.addActionListener(a);
+//	}
+//	public void setAdditionBtn2Action(ActionListener a){
+//		additionBtn2.addActionListener(a);
+//	}
+//	public void setAdditionBtnEnabled(boolean b){
+//		setAdditionBtn1Enabled(b);
+//		setAdditionBtn2Enabled(b);
+//	}
+//	public void setAdditionBtn1Enabled(boolean b){
+//		additionBtn1.setEnabled(b);
+//	}
+//	public void setAdditionBtn2Enabled(boolean b){
+//		additionBtn2.setEnabled(b);
+//	}
 	
 	
 	public String getField1Text(){
@@ -515,6 +608,7 @@ class FloydPanel extends JPanel{
 
 class FloydAlgorithm extends Thread{
 	
+	private boolean isXlsx = false;
 	private String a, b;
 	private MainFrame parent;
 	private JLabel label;
@@ -535,6 +629,16 @@ class FloydAlgorithm extends Thread{
 	
 	public boolean getIsReady(){
 		return isDataReady;
+	}
+	
+	FloydAlgorithm(MainFrame parent){
+		
+		isXlsx = true;
+		this.parent = parent;
+		this.label = parent.getFloydPanel().getStateLabel();
+		this.progressState = new ArrayList<>();
+		this.actorImgList = null;
+		
 	}
 	
 	FloydAlgorithm(String a, String b, MainFrame parent){
@@ -580,7 +684,11 @@ class FloydAlgorithm extends Thread{
 
 		
 		addState("Making movie list...", true);
-		movieList = getMovieListFromXlsx(a, b);
+		if(isXlsx){
+			movieList = getMovieListFromXlsx();
+		}else{
+			movieList = getMovieList(a, b);
+		}
 		if(movieList.size() <= 0){
 			parent.getYearPanel().setEnabled(true);
 			addState("영화 목록이 없습니다.", true);
@@ -786,20 +894,30 @@ class FloydAlgorithm extends Thread{
 	private ArrayList<String> getActorList(ArrayList<HashMap<String, Object>> mList){
 
 		ArrayList<String> querys = new ArrayList<String>();
-		actorImgList.clear();
+		if(!isXlsx){
+			actorImgList.clear();
+		}
 		
 		for(int i=0; i<mList.size(); i++){
 			
 			HashMap<String, Object> h  = mList.get(i);
 			
 			ArrayList<String> list = (ArrayList<String>)h.get("actor");
-			ArrayList<String> list2 = (ArrayList<String>)h.get("actorImg");
+			
+			ArrayList<String> list2;
+			if(!isXlsx){
+				list2 = (ArrayList<String>)h.get("actorImg");
+			}else{
+				list2 = new ArrayList<>();
+			}
 			
 			for(int j=0; j<list.size(); j++){
 				String s = list.get(j);
 				if(!querys.contains(s)){
 					querys.add(s);
-					actorImgList.add(list2.get(j));
+					if(!isXlsx){
+						actorImgList.add(list2.get(j));
+					}
 				}
 			}
 			
@@ -809,7 +927,7 @@ class FloydAlgorithm extends Thread{
 
 	}
 
-	private ArrayList<HashMap<String, Object>> getMovieListFromXlsx(String year1, String year2){
+	private ArrayList<HashMap<String, Object>> getMovieList(String year1, String year2){
 
 		ArrayList<HashMap<String, Object>> querys = new ArrayList<>();
 		
@@ -850,6 +968,136 @@ class FloydAlgorithm extends Thread{
 		}catch(Exception e){
 			e.printStackTrace();
 			addState("영화 정보를 가져올 수 없습니다.", true);
+		}
+
+		return querys;
+
+	}
+	
+	private ArrayList<HashMap<String, Object>> getMovieListFromXlsx(){
+
+		ArrayList<HashMap<String, Object>> querys = new ArrayList<>();
+		
+		try{
+			FileInputStream fis = new FileInputStream("koreaMovieList.xlsx");
+			XSSFWorkbook workbook = new XSSFWorkbook(fis);
+			int rowindex = 0;
+			int columnindex = 0;
+
+			XSSFSheet sheet = workbook.getSheetAt(0);
+
+			int rows = sheet.getPhysicalNumberOfRows();
+			for(rowindex=1; rowindex<rows; rowindex++){
+
+				XSSFRow row = sheet.getRow(rowindex);
+				if(row != null){
+
+					HashMap<String, Object> temp = new HashMap<>();
+					ArrayList<String>  actorList = new ArrayList<>();
+
+					int cells = row.getPhysicalNumberOfCells();
+
+					XSSFCell cellTitle = row.getCell(1);
+
+					String year = "";
+					if(cellTitle == null){
+						continue;
+					}else{
+						switch(cellTitle.getCellType()){
+						case XSSFCell.CELL_TYPE_FORMULA:
+							year = cellTitle.getCellFormula();
+							break;
+						case XSSFCell.CELL_TYPE_NUMERIC:
+							year = cellTitle.getNumericCellValue()+"";
+							break;
+						case XSSFCell.CELL_TYPE_STRING:
+							year = cellTitle.getStringCellValue()+"";
+							break;
+						case XSSFCell.CELL_TYPE_BLANK:
+							year = cellTitle.getBooleanCellValue()+"";
+							break;
+						case XSSFCell.CELL_TYPE_ERROR:
+							year = cellTitle.getErrorCellValue()+"";
+							break;
+						}
+					}
+
+
+
+					temp.put("year", Integer.parseInt(year));
+
+
+					cellTitle = row.getCell(0);
+
+					String title = "";
+					if(cellTitle == null){
+						continue;
+					}else{
+						switch(cellTitle.getCellType()){
+						case XSSFCell.CELL_TYPE_FORMULA:
+							title = cellTitle.getCellFormula();
+							break;
+						case XSSFCell.CELL_TYPE_NUMERIC:
+							title = cellTitle.getNumericCellValue()+"";
+							break;
+						case XSSFCell.CELL_TYPE_STRING:
+							title = cellTitle.getStringCellValue()+"";
+							break;
+						case XSSFCell.CELL_TYPE_BLANK:
+							title = cellTitle.getBooleanCellValue()+"";
+							break;
+						case XSSFCell.CELL_TYPE_ERROR:
+							title = cellTitle.getErrorCellValue()+"";
+							break;
+						}
+					}
+
+					temp.put("title", title);
+
+
+
+
+					cellTitle = row.getCell(2);
+
+					String content = "";
+					if(cellTitle == null){
+						continue;
+					}else{
+						switch(cellTitle.getCellType()){
+						case XSSFCell.CELL_TYPE_FORMULA:
+							content = cellTitle.getCellFormula();
+							break;
+						case XSSFCell.CELL_TYPE_NUMERIC:
+							content = cellTitle.getNumericCellValue()+"";
+							break;
+						case XSSFCell.CELL_TYPE_STRING:
+							content = cellTitle.getStringCellValue()+"";
+							break;
+						case XSSFCell.CELL_TYPE_BLANK:
+							content = cellTitle.getBooleanCellValue()+"";
+							break;
+						case XSSFCell.CELL_TYPE_ERROR:
+							content = cellTitle.getErrorCellValue()+"";
+							break;
+						}
+					}
+
+
+					for(String s : content.split(",")){
+						actorList.add(s);
+					}
+
+					temp.put("actor", actorList);
+					
+					querys.add(temp);
+					
+				}
+
+			}
+
+		}catch(Exception e){
+			e.printStackTrace();
+			addState("영화 엑셀파일을 가져올 수 없습니다.", true);
 		}
 
 		return querys;
