@@ -476,37 +476,6 @@ class SearchPanel extends JPanel implements ComponentListener{
 		addGrid(gbl,gbc, additionPanel, 0, 2, 4, 1, 1, 1);
 		
 	}
-	
-//	public void showAdditionButtonPanel(){
-//
-//		additionPanel = new JPanel();
-//		additionBtn1 = new JButton("btn1");
-//		additionBtn2 = new JButton("btn2");
-//		
-//		additionPanel.setOpaque(true);
-//		additionPanel.setBackground(ActorRelationship.bgDarkColor);
-//		
-//		additionBtn1.setOpaque(true);
-//		additionBtn1.setBackground(ActorRelationship.bgDarkColor);
-//		additionBtn1.setForeground(Color.white);
-//		additionBtn1.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, Color.darkGray),
-//				BorderFactory.createEmptyBorder(5,  5,  5,  0)));
-//		
-//		additionBtn2.setOpaque(true);
-//		additionBtn2.setBackground(ActorRelationship.bgDarkColor);
-//		additionBtn2.setForeground(Color.white);
-//		additionBtn2.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 0, 0, 0, Color.darkGray),
-//				BorderFactory.createEmptyBorder(5,  5,  5,  0)));
-//		
-//		
-//		additionPanel.setLayout(new GridLayout(1, 2));
-//		additionPanel.add(additionBtn1);
-//		additionPanel.add(additionBtn2);
-//		additionPanel.setVisible(true);
-//		
-//		addGrid(gbl,gbc, additionPanel, 0, 2, 4, 1, 1, 1);
-//		
-//	}
 
 	public void setSearchBtnText(String t){
 		searchBtn.setText(t);
@@ -532,29 +501,6 @@ class SearchPanel extends JPanel implements ComponentListener{
 			c.setEnabled(b);
 		}
 	}
-//	public void setAdditionBtn1Text(String t){
-//		additionBtn1.setText(t);
-//	}
-//	public void setAdditionBtn2Text(String t){
-//		additionBtn2.setText(t);
-//	}
-//	public void setAdditionBtn1Action(ActionListener a){
-//		additionBtn1.addActionListener(a);
-//	}
-//	public void setAdditionBtn2Action(ActionListener a){
-//		additionBtn2.addActionListener(a);
-//	}
-//	public void setAdditionBtnEnabled(boolean b){
-//		setAdditionBtn1Enabled(b);
-//		setAdditionBtn2Enabled(b);
-//	}
-//	public void setAdditionBtn1Enabled(boolean b){
-//		additionBtn1.setEnabled(b);
-//	}
-//	public void setAdditionBtn2Enabled(boolean b){
-//		additionBtn2.setEnabled(b);
-//	}
-	
 	
 	public String getField1Text(){
 		return field1.getText();
@@ -720,6 +666,95 @@ class FloydAlgorithm extends Thread{
 		parent.getActorPanel().setEnabled(isDataReady);
 		
 	}
+
+	
+	private void init(){
+		basicGraph = new int[actorList.size()][actorList.size()];
+		dGraph = new int[actorList.size()][actorList.size()];
+		pGraph = new int[actorList.size()][actorList.size()];
+		movieTitle = new String[actorList.size()][actorList.size()];
+		
+		addState("Initialize Basic Graph...", true);
+		for(int i=0; i<actorList.size(); i++){
+			addState("(" + (int)((double)i/actorList.size()*100) + "%)", false);
+			for(int j=0; j<actorList.size(); j++){
+				basicGraph[i][j] = 5000;
+			}
+		}
+		addState("Done", false);
+	}
+	
+	private void makeBasicGraph(){
+		
+		addState("Making Basic Graph...", true);
+		int k=0;
+		for(HashMap<String ,Object> temp : movieList){
+
+			addState("(" + (int)((double)k/movieList.size()*100) + "%)", false);
+			k+=1;
+			
+			String title = (String)temp.get("title");
+			int year = (int)temp.get("year");
+			ArrayList<String> actor = (ArrayList<String>)temp.get("actor");
+
+			for(int i=0; i<actor.size(); i++){
+				for(int j=0; j<actor.size(); j++){
+
+					
+					String actI = actor.get(i);
+					String actJ = actor.get(j);
+
+					int indexI = actorList.indexOf(actI);
+					int indexJ = actorList.indexOf(actJ);
+
+					if(actor.get(j).equals(actor.get(i))){
+						basicGraph[indexJ][indexI] = 0;
+						basicGraph[indexI][indexJ] = 0;
+					}else{
+
+						if(basicGraph[indexJ][indexI] > year){
+							basicGraph[indexJ][indexI] = 2017-year;
+							basicGraph[indexI][indexJ] = 2017-year;
+							movieTitle[indexJ][indexI] = title;
+							movieTitle[indexI][indexJ] = title;
+						}
+
+					}
+
+				}
+			}
+		}
+		
+		addState("Done", false);
+		
+	}
+	
+	private void makeDGraph(){
+		
+		addState("Making D Graph...", true);
+		dGraph = basicGraph.clone();
+		
+		for(int i=0; i<basicGraph.length; i++){
+			dGraph[i] = basicGraph[i].clone();
+		}
+		
+		for(int k=0; k<actorList.size(); k++){
+			addState("(" + (int)((double)k/actorList.size()*100) + "%)", false);
+			for(int i=0; i<actorList.size(); i++){
+				for(int j=0; j<actorList.size(); j++){
+					
+					if(dGraph[i][k] + dGraph[k][j] < dGraph[i][j]){
+						pGraph[i][j] = k;
+						dGraph[i][j] = dGraph[i][k] + dGraph[k][j];
+					}
+					
+				}
+			}
+		}
+		
+		addState("Done", false);
+		
+	}
 	
 	private boolean path(int q, int r){
 		
@@ -807,94 +842,6 @@ class FloydAlgorithm extends Thread{
 	
 	public ArrayList<HashMap<String, Object>> getMovieList(){
 		return movieList;
-	}
-	
-	private void init(){
-		basicGraph = new int[actorList.size()][actorList.size()];
-		dGraph = new int[actorList.size()][actorList.size()];
-		pGraph = new int[actorList.size()][actorList.size()];
-		movieTitle = new String[actorList.size()][actorList.size()];
-		
-		addState("Initialize basic graph...", true);
-		for(int i=0; i<actorList.size(); i++){
-			addState("(" + (int)((double)i/actorList.size()*100) + "%)", false);
-			for(int j=0; j<actorList.size(); j++){
-				basicGraph[i][j] = 5000;
-			}
-		}
-		addState("Done", false);
-	}
-	
-	private void makeBasicGraph(){
-		
-		addState("Making basic graph...", true);
-		int k=0;
-		for(HashMap<String ,Object> temp : movieList){
-
-			addState("(" + (int)((double)k/movieList.size()*100) + "%)", false);
-			k+=1;
-			
-			String title = (String)temp.get("title");
-			int year = (int)temp.get("year");
-			ArrayList<String> actor = (ArrayList<String>)temp.get("actor");
-
-			for(int i=0; i<actor.size(); i++){
-				for(int j=0; j<actor.size(); j++){
-
-					
-					String actI = actor.get(i);
-					String actJ = actor.get(j);
-
-					int indexI = actorList.indexOf(actI);
-					int indexJ = actorList.indexOf(actJ);
-
-					if(actor.get(j).equals(actor.get(i))){
-						basicGraph[indexJ][indexI] = 0;
-						basicGraph[indexI][indexJ] = 0;
-					}else{
-
-						if(basicGraph[indexJ][indexI] > year){
-							basicGraph[indexJ][indexI] = 2017-year;
-							basicGraph[indexI][indexJ] = 2017-year;
-							movieTitle[indexJ][indexI] = title;
-							movieTitle[indexI][indexJ] = title;
-						}
-
-					}
-
-				}
-			}
-		}
-		
-		addState("Done", false);
-		
-	}
-	
-	private void makeDGraph(){
-		
-		addState("Making D graph...", true);
-		dGraph = basicGraph.clone();
-		
-		for(int i=0; i<basicGraph.length; i++){
-			dGraph[i] = basicGraph[i].clone();
-		}
-		
-		for(int k=0; k<actorList.size(); k++){
-			addState("(" + (int)((double)k/actorList.size()*100) + "%)", false);
-			for(int i=0; i<actorList.size(); i++){
-				for(int j=0; j<actorList.size(); j++){
-					
-					if(dGraph[i][k] + dGraph[k][j] < dGraph[i][j]){
-						pGraph[i][j] = k;
-						dGraph[i][j] = dGraph[i][k] + dGraph[k][j];
-					}
-					
-				}
-			}
-		}
-		
-		addState("Done", false);
-		
 	}
 	
 	private ArrayList<String> getActorList(ArrayList<HashMap<String, Object>> mList){
@@ -1114,11 +1061,11 @@ class FloydAlgorithm extends Thread{
 	public void printBasicGraph(){
 		
 		try {
-			addState("Print basic graph to txt...", true);
+			addState("Print Basic Graph to .txt ...", true);
 			BufferedWriter out = new BufferedWriter(new FileWriter("basicGraph.txt"));
 			
 			for(int i=0; i<=actorList.size(); i++){
-				addState("(" + (int)((double)i/actorList.size()*100) +"%)", false);
+				addState("(" + (int)((double)(i+1)/actorList.size()*100) +"%)", false);
 				String s = "";
 				
 				if(i==0){
@@ -1150,11 +1097,11 @@ class FloydAlgorithm extends Thread{
 	public void printdGraph(){
 		
 		try {
-			addState("Print D Graph to txt...", true);
+			addState("Print D Graph to .txt ...", true);
 			BufferedWriter out = new BufferedWriter(new FileWriter("dGraph.txt"));
 			
 			for(int i=0; i<=actorList.size(); i++){
-				addState("(" + (int)((double)i/actorList.size()*100) +"%)", false);
+				addState("(" + (int)((double)(i+1)/actorList.size()*100) +"%)", false);
 				String s = "";
 				
 				if(i==0){
