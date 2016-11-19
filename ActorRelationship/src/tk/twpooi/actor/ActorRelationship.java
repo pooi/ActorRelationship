@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 
 import javax.imageio.ImageIO;
@@ -850,6 +851,8 @@ class FloydAlgorithm extends Thread{
 		if(!isXlsx){
 			actorImgList.clear();
 		}
+		
+		Collections.shuffle(mList);
 		
 		for(int i=0; i<mList.size(); i++){
 			
