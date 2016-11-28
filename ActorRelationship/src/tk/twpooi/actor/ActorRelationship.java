@@ -212,7 +212,7 @@ class MainFrame extends JFrame{
 		
 		yearPanel = new SearchPanel(this);
 		yearPanel.setField1Text("2016");
-		yearPanel.setField2Text("2014");
+		yearPanel.setField2Text("1923");
 		yearPanel.setSearchBtnAction(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
 				
@@ -281,6 +281,8 @@ class MainFrame extends JFrame{
 		
 		JButton addActorBtn1 = new JButton("basicGraph 출력");
 		JButton addActorBtn2 = new JButton("dGraph 출력");
+		JButton addActorBtn3 = new JButton("pGraph 출력");
+		JButton addActorBtn4 = new JButton("mTitle 출력");
 		
 		addActorBtn1.setOpaque(true);
 		addActorBtn1.setBackground(ActorRelationship.bgDarkColor);
@@ -292,6 +294,18 @@ class MainFrame extends JFrame{
 		addActorBtn2.setBackground(ActorRelationship.bgDarkColor);
 		addActorBtn2.setForeground(Color.white);
 		addActorBtn2.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(0, 0, 0, 0, Color.darkGray),
+				BorderFactory.createEmptyBorder(5,  5,  5,  0)));
+		
+		addActorBtn3.setOpaque(true);
+		addActorBtn3.setBackground(ActorRelationship.bgDarkColor);
+		addActorBtn3.setForeground(Color.white);
+		addActorBtn3.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(1, 0, 0, 1, Color.darkGray),
+				BorderFactory.createEmptyBorder(5,  5,  5,  0)));
+		
+		addActorBtn4.setOpaque(true);
+		addActorBtn4.setBackground(ActorRelationship.bgDarkColor);
+		addActorBtn4.setForeground(Color.white);
+		addActorBtn4.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, Color.darkGray),
 				BorderFactory.createEmptyBorder(5,  5,  5,  0)));
 		
 		addActorBtn1.addActionListener(new ActionListener(){
@@ -324,7 +338,37 @@ class MainFrame extends JFrame{
 				}.start();
 			}
 		});
-		actorPanel.addAdditionComponents(addActorBtn1, addActorBtn2);
+		addActorBtn3.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+				new Thread(){
+					public void run(){
+						yearPanel.setEnabled(false);
+						actorPanel.setAdditionPanelEnabled(false);
+						
+						ActorRelationship.floyd.printpGraph();
+						
+						actorPanel.setAdditionPanelEnabled(true);
+						yearPanel.setEnabled(true);
+					}
+				}.start();
+			}
+		});
+		addActorBtn4.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+				new Thread(){
+					public void run(){
+						yearPanel.setEnabled(false);
+						actorPanel.setAdditionPanelEnabled(false);
+						
+						ActorRelationship.floyd.printmTitle();
+						
+						actorPanel.setAdditionPanelEnabled(true);
+						yearPanel.setEnabled(true);
+					}
+				}.start();
+			}
+		});
+		actorPanel.addAdditionComponents(addActorBtn1, addActorBtn2, addActorBtn3, addActorBtn4);
 		actorPanel.setAdditionPanelEnabled(false);
 		
 		this.add(actorPanel, BorderLayout.SOUTH);
@@ -472,6 +516,24 @@ class SearchPanel extends JPanel implements ComponentListener{
 		additionPanel.setLayout(new GridLayout(1, 2));
 		additionPanel.add(c1);
 		additionPanel.add(c2);
+		additionPanel.setVisible(true);
+		
+		addGrid(gbl,gbc, additionPanel, 0, 2, 4, 1, 1, 1);
+		
+	}
+	
+	public void addAdditionComponents(Component c1, Component c2, Component c3, Component c4){
+		
+		additionPanel = new JPanel();
+		
+		additionPanel.setOpaque(true);
+		additionPanel.setBackground(ActorRelationship.bgDarkColor);
+		
+		additionPanel.setLayout(new GridLayout(2, 2));
+		additionPanel.add(c1);
+		additionPanel.add(c2);
+		additionPanel.add(c3);
+		additionPanel.add(c4);
 		additionPanel.setVisible(true);
 		
 		addGrid(gbl,gbc, additionPanel, 0, 2, 4, 1, 1, 1);
@@ -735,6 +797,12 @@ class FloydAlgorithm extends Thread{
 		addState("Making D Graph...", true);
 		dGraph = basicGraph.clone();
 		
+		for(int i=0; i<actorList.size(); i++){
+			for(int j=0; j<actorList.size(); j++){
+				pGraph[i][j] = -1;
+			}
+		}
+		
 		for(int i=0; i<basicGraph.length; i++){
 			dGraph[i] = basicGraph[i].clone();
 		}
@@ -759,7 +827,7 @@ class FloydAlgorithm extends Thread{
 	
 	private boolean path(int q, int r){
 		
-		if(pGraph[q][r] != 0){
+		if(pGraph[q][r] != -1){
 			if(!path(q, pGraph[q][r])){
 				HashMap<String,String> temp = new HashMap<>();
 				temp.put("actor", actorList.get(pGraph[q][r]));
@@ -851,8 +919,6 @@ class FloydAlgorithm extends Thread{
 		if(!isXlsx){
 			actorImgList.clear();
 		}
-		
-		Collections.shuffle(mList);
 		
 		for(int i=0; i<mList.size(); i++){
 			
@@ -1117,6 +1183,91 @@ class FloydAlgorithm extends Thread{
 					for(int j=0; j<actorList.size(); j++){
 						
 						s += dGraph[i-1][j] + ",";
+						
+					}
+				}
+				
+				out.write(s); out.newLine();
+			}
+
+			out.close();
+			addState("Done", false);
+		} catch (IOException e) {
+			e.printStackTrace();
+			addState("Error", false);
+		}
+		
+	}
+
+	public void printpGraph(){
+		
+		try {
+			addState("Print P Graph to .txt ...", true);
+			BufferedWriter out = new BufferedWriter(new FileWriter("pGraph.txt"));
+			
+			for(int i=0; i<=actorList.size(); i++){
+				addState("(" + (int)((double)(i+1)/actorList.size()*100) +"%)", false);
+				String s = "";
+				
+				if(i==0){
+					s += ",";
+					for(String t : actorList){
+						s += t + ",";
+					}
+				}else{
+					s += actorList.get(i-1) + ",";
+					for(int j=0; j<actorList.size(); j++){
+						
+						String str;
+						if(pGraph[i-1][j] < 0){
+							str = " ";
+						}else{
+							str = actorList.get(pGraph[i-1][j]);
+						}
+						s += str + ",";
+						
+					}
+				}
+				
+				out.write(s); out.newLine();
+			}
+
+			out.close();
+			addState("Done", false);
+		} catch (IOException e) {
+			e.printStackTrace();
+			addState("Error", false);
+		}
+		
+	}
+	
+	public void printmTitle(){
+		
+		try {
+			addState("Print Movie Title to .txt ...", true);
+			BufferedWriter out = new BufferedWriter(new FileWriter("mTitle.txt"));
+			
+			for(int i=0; i<=actorList.size(); i++){
+				addState("(" + (int)((double)(i+1)/actorList.size()*100) +"%)", false);
+				String s = "";
+				
+				if(i==0){
+					s += ",";
+					for(String t : actorList){
+						s += t + ",";
+					}
+				}else{
+					s += actorList.get(i-1) + ",";
+					for(int j=0; j<actorList.size(); j++){
+						
+						String str = movieTitle[i-1][j];
+						if(str != null){
+							str = str.replaceAll(",", "");
+						}else{
+							str = " ";
+						}
+						
+						s += str + ",";
 						
 					}
 				}
