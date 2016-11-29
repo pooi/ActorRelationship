@@ -83,6 +83,7 @@ class SubFrame extends JFrame{
 			label.setForeground(Color.white);
 			label.setHorizontalAlignment(SwingConstants.CENTER);
 			
+			this.setLayout(new GridLayout(1, 1));
 			this.add(label);
 			
 		}else{
@@ -893,6 +894,13 @@ class FloydAlgorithm extends Thread{
 			pathList.add(temp);
 			
 			path(indexA, indexB);
+			
+			if(pathList.size() == 1){
+				HashMap<String,String> temp2 = new HashMap<>();
+				temp2.put("actor", finish);
+				temp2.put("movie", movieTitle[indexA][indexB]);
+				pathList.add(temp2);
+			}
 		
 		}
 		
