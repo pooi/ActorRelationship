@@ -12,6 +12,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.io.BufferedWriter;
 import java.io.FileInputStream;
@@ -20,7 +22,6 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 
 import javax.imageio.ImageIO;
@@ -29,8 +30,10 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
@@ -197,6 +200,90 @@ class SubFrame extends JFrame{
 	
 }
 
+class ListFrame extends JFrame{
+	
+	private ArrayList<ArrayList<HashMap<String, String>>> list;
+	
+	private JList jList;
+	
+	ListFrame(ArrayList<ArrayList<HashMap<String, String>>> list){
+		
+		this.list = list;
+		
+		this.setSize(360, 640);
+		this.setLayout(new BorderLayout());
+		
+		JLabel info = new JLabel("총 " + list.size() + "명");
+		info.setPreferredSize(new Dimension((int)getSize().getWidth(), 30));
+		info.setOpaque(true);
+		info.setBackground(ActorRelationship.headerColor);
+		info.setForeground(Color.white);
+		info.setHorizontalAlignment(SwingConstants.CENTER);
+		info.setVerticalAlignment(SwingConstants.CENTER);
+		this.add(info, BorderLayout.NORTH);
+		
+		jList = new JList(getListInfo());
+		jList.setOpaque(true);
+		jList.setBackground(ActorRelationship.bgColor);
+		jList.setForeground(Color.white);
+		jList.addMouseListener(new MouseAdapter(){
+			
+			public void mouseClicked(MouseEvent evt) {
+		        JList tempList = (JList)evt.getSource();
+		        if (evt.getClickCount() == 2) {
+		            int index = tempList.locationToIndex(evt.getPoint());
+		            
+		            ArrayList<HashMap<String, String>> a = list.get(index);
+					
+					String start = a.get(0).get("actor");
+					String finish = a.get(a.size()-1).get("actor");
+		            SubFrame f = new SubFrame(ActorRelationship.floyd.getRelationship(start, finish), a, getBounds());
+		        }
+		    }
+			
+		});
+		JScrollPane scrollPane = new JScrollPane(jList);
+		
+		//Container contentPane = this.getContentPane();
+		this.add(scrollPane, BorderLayout.CENTER);
+		
+		
+		this.setVisible(true);
+		
+	}
+	
+	private Rectangle getRec(){
+		return this.getBounds();
+	}
+	
+	private String[] getListInfo(){
+		
+		String[] returnList = new String[list.size()];
+		
+		for(int i=0; i<list.size(); i++){
+			
+			ArrayList<HashMap<String, String>> a = list.get(i);
+			
+			String start = a.get(0).get("actor");
+			String finish = a.get(a.size()-1).get("actor");
+			String s = String.format("%3d : %s -> %s (%d년, %d명 거침)",
+					i+1,
+					start,
+					finish,
+					ActorRelationship.floyd.getRelationship(start, finish),
+					Math.max(0, a.size()-2)
+			);
+			
+			returnList[i] = s;
+		}
+		
+		return returnList;
+		
+	}
+	
+	
+}
+
 class MainFrame extends JFrame{
 	
 	private FloydPanel floydPanel;
@@ -269,11 +356,25 @@ class MainFrame extends JFrame{
 				}else if((b.equals("") || b == null)){
 					JOptionPane.showMessageDialog(null, "두번째 배우를 입력해주세요.", "경고", JOptionPane.WARNING_MESSAGE);
 				}else{
-				
-					ArrayList<HashMap<String, String>> list = ActorRelationship.floyd.getPath(a, b);
-				
-					if(list.size() != 0){
-						SubFrame f = new SubFrame(ActorRelationship.floyd.getRelationship(a, b), list, getBound());
+					
+					boolean check;
+					
+					try{
+						int c = Integer.parseInt(b);
+						check = false;
+					}catch(Exception e2){
+						check = true;
+					}
+					
+					
+					if(check){
+						ArrayList<HashMap<String, String>> list = ActorRelationship.floyd.getPath(a, b);
+						
+						if(list.size() != 0){
+							SubFrame f = new SubFrame(ActorRelationship.floyd.getRelationship(a, b), list, getBound());
+						}
+					}else{
+						ListFrame f = new ListFrame( ActorRelationship.floyd.getPathFromYear(a, Integer.parseInt(b)) );
 					}
 					
 				}
@@ -906,6 +1007,24 @@ class FloydAlgorithm extends Thread{
 		
 		
 		return pathList;
+		
+	}
+	
+	public ArrayList<ArrayList<HashMap<String, String>>> getPathFromYear(String start, int year){
+		
+		ArrayList<ArrayList<HashMap<String, String>>> list = new ArrayList<>();
+		
+		int indexS = actorList.indexOf(start);
+		
+		for(int i=0; i<actorList.size(); i++){
+			
+			if(0 < dGraph[i][indexS] && dGraph[i][indexS] <= year){
+				list.add(getPath(start, actorList.get(i)));
+			}
+			
+		}
+		
+		return list;
 		
 	}
 	
