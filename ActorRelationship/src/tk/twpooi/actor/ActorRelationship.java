@@ -776,7 +776,7 @@ class FloydAlgorithm extends Thread{
 						basicGraph[indexI][indexJ] = 0;
 					}else{
 
-						if(basicGraph[indexJ][indexI] > year){
+						if(basicGraph[indexJ][indexI] > 2017 - year){
 							basicGraph[indexJ][indexI] = 2017-year;
 							basicGraph[indexI][indexJ] = 2017-year;
 							movieTitle[indexJ][indexI] = title;
