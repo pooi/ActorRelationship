@@ -4,6 +4,9 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -60,6 +63,9 @@ public class ActorRelationship {
 
 class SubFrame extends JFrame{
 	
+	private final int IMAGE_W = 74;
+	private final int IMAGE_H = 107;
+	
 	private int totalYear;
 	private ArrayList<HashMap<String, String>> list;
 	
@@ -73,12 +79,11 @@ class SubFrame extends JFrame{
 			height = height/4*list.size();
 		}
 		
-		this.setBounds((int)r.getX()+10, (int)r.getY()+10, (int)r.getWidth(), (int)height);
-		
-		GridLayout gl = new GridLayout( list.size(), 1);
-		this.setLayout(gl);
+		this.setLayout(new BorderLayout());
 		
 		if(total == 5000){
+			
+			this.setBounds(10, 10, 1000, 500);
 			
 			JLabel label = new JLabel("There are no relationship.");
 			label.setOpaque(true);
@@ -86,17 +91,135 @@ class SubFrame extends JFrame{
 			label.setForeground(Color.white);
 			label.setHorizontalAlignment(SwingConstants.CENTER);
 			
-			this.setLayout(new GridLayout(1, 1));
-			this.add(label);
+			this.add(label, BorderLayout.CENTER);
 			
 		}else{
-			for(HashMap<String, String> h : list){
-				ActorItem item = new ActorItem(h);
-				this.add(item);
-			}
+			
+			int w2 = 120;
+			
+			int width = w2*total + list.size()*IMAGE_W + 100;
+			this.setBounds(10, 10, width, 500);
+			
+			JLabel titleLabel = new JLabel("ÃÑ " + totalYear + "³â");
+			titleLabel.setOpaque(true);
+			titleLabel.setBackground(ActorRelationship.headerColor);
+			titleLabel.setForeground(Color.white);
+			titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
+			titleLabel.setVerticalAlignment(SwingConstants.CENTER);
+			titleLabel.setPreferredSize(new Dimension((int)this.getSize().getWidth(), 30));
+			
+			this.add(titleLabel, BorderLayout.NORTH);
+			
+			
+			this.add(new ActorPanel(), BorderLayout.CENTER);
+//			for(HashMap<String, String> h : list){
+//				ActorItem item = new ActorItem(h);
+//				this.add(item);
+//			}
 		}
 		
 		this.setVisible(true);
+	}
+	
+	class ActorPanel extends JPanel{
+
+		private ArrayList<String> actorList;
+		private ArrayList<String> actorImgList;
+		private ArrayList<HashMap<String, Object>> movieList;
+		
+		
+		ActorPanel(){
+			
+			this.movieList = ActorRelationship.floyd.getMovieList();
+			this.actorList = ActorRelationship.floyd.getActorList();
+			this.actorImgList = ActorRelationship.floyd.getActorImgList();
+			
+			this.setOpaque(true);
+			this.setBackground(ActorRelationship.bgColor);
+			
+		}
+		
+		@Override
+		public void paintComponent(Graphics g){
+			super.paintComponent(g);
+			
+			int w2 = 120;
+			
+			int x = 50;
+			int y = 100;
+			
+			for(int i=0; i<list.size(); i++){
+				
+				HashMap<String, String> h = list.get(i);
+				String actor = h.get("actor");
+
+				g.setColor(Color.white);
+				
+				int nextX = x;
+
+				if(i+1 < list.size()){
+					String movie = list.get(i+1).get("movie");
+					int movieYear = getMovieYear(movie);
+					nextX += IMAGE_W + w2*movieYear;
+					
+					
+					g.setFont(new Font(this.getFont().getFontName(), Font.PLAIN, 12));
+					Font font = getFont();
+					FontMetrics metrics = getFontMetrics(font);
+					
+
+					int titleX = (nextX + x+IMAGE_W)/2 - metrics.stringWidth(movie)/2;
+					g.drawString(movie, titleX, y+IMAGE_H/2);
+					
+					String yText = String.format("(%d) - %d³â", 2017-movieYear, movieYear);
+					titleX = (nextX + x+IMAGE_W)/2 - metrics.stringWidth(yText)/2;
+					g.drawString(yText, titleX, y+10+IMAGE_H/2+20);
+				}
+				
+
+				g.setFont(new Font(this.getFont().getFontName(), Font.PLAIN, 14));
+				g.drawString(actor, x, y);
+				g.drawLine(x + IMAGE_W, y+10+IMAGE_H/2, nextX, y+10+IMAGE_H/2);
+				
+				
+				BufferedImage image = null;
+				try{
+					String path = actorImgList.get(actorList.indexOf(actor));
+					URL url = new URL(path);
+					image = ImageIO.read(url);
+					g.drawImage(image, x, y+10, x+IMAGE_W, y+10+IMAGE_H, 0, 0, image.getWidth(), image.getHeight(), null);
+
+				}catch(Exception e){
+					g.setColor(Color.gray);
+					g.fillRect(x, y+10, IMAGE_W, IMAGE_H);
+				}
+				
+				x = nextX;
+				
+			}
+			
+		}
+		
+		public int getMovieYear(String title){
+			
+			int year=0;
+			
+			if(title.equals("header")){
+				return 0;
+			}
+			
+			for(HashMap<String, Object> h : movieList){
+				if(h.get("title").equals(title)){
+					year = (int)h.get("year");
+					
+					break;
+				}
+			}
+			
+			return 2017-year;
+			
+		}
+		
 	}
 	
 	class ActorItem extends JPanel{
@@ -151,7 +274,8 @@ class SubFrame extends JFrame{
 					addGrid(gbl, gbc, actorImgLabel, 0, 1, 1, 2, 1, 2);
 
 				}catch(Exception e){
-					e.printStackTrace();
+					//e.printStackTrace();
+					System.out.println(e.getMessage());
 				}
 			}
 
@@ -244,7 +368,6 @@ class ListFrame extends JFrame{
 		});
 		JScrollPane scrollPane = new JScrollPane(jList);
 		
-		//Container contentPane = this.getContentPane();
 		this.add(scrollPane, BorderLayout.CENTER);
 		
 		
@@ -300,7 +423,7 @@ class MainFrame extends JFrame{
 		
 		yearPanel = new SearchPanel(this);
 		yearPanel.setField1Text("2016");
-		yearPanel.setField2Text("1923");
+		yearPanel.setField2Text("2014");
 		yearPanel.setSearchBtnAction(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
 				
